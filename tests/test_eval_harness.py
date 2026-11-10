@@ -42,3 +42,17 @@ def test_fullwidth_citations_are_normalized():
     answer = normalize_citations("Durée de 18 semaines 【1】 【3】, voir aussi 【2†source】 et [4].")
     assert answer == "Durée de 18 semaines [1] [3], voir aussi [2] et [4]."
     assert invalid_citations(answer, 3) == [4]
+
+
+def test_attachments_get_their_own_section_and_plain_prompts_are_unchanged():
+    from eih_rag.rag.prompting import ATTACHMENT_HEADER, build_user_prompt
+    from eih_rag.rag.store import RetrievedChunk
+
+    def hit(text, kind):
+        return RetrievedChunk(id=text, chunk_id=text, text=text, file="f.md", reference=None, date=None, page=1, section=None, score=0.9, document_type=kind)
+
+    plain = build_user_prompt("Q ?", [hit("officiel", "Règlement")])
+    assert plain == "EXTRAITS OFFICIELS:\n[1] Document: non renseignee | Reference: non renseignee | Date: non renseignee | Page: 1\nofficiel\n\nQUESTION ETUDIANTE:\nQ ?\n\nREPONSE:"
+    mixed = build_user_prompt("Q ?", [hit("officiel", "Règlement"), hit("mes notes", "attachment")])
+    official_part, attached_part = mixed.split(ATTACHMENT_HEADER)
+    assert "mes notes" not in official_part and "[2] FICHIER JOINT (non officiel)" in attached_part

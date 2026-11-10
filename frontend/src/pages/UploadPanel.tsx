@@ -2,7 +2,7 @@ import { AlertCircle, CheckCircle2, Loader2, RotateCcw, UploadCloud, X } from 'l
 import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { api, ApiError } from '../api/client'
 import { useT, type StringKey } from '../i18n'
-import { useApp } from '../state'
+import { formatSize, useApp } from '../state'
 import type { DocumentRow } from '../types'
 
 export const PIPELINE = ['uploaded', 'parsing', 'chunking', 'embedding', 'indexed'] as const
@@ -149,7 +149,7 @@ export function UploadPanel({ replaceTarget, onClose, onChanged }: { replaceTarg
             <li key={item.key} className="upload-item">
               <div className="upload-item__head">
                 <strong className="upload-item__name">{item.file.name}</strong>
-                <span className="muted small">{(item.file.size / 1024).toFixed(0)} Ko</span>
+                <span className="muted small">{formatSize(item.file.size)}</span>
                 {item.state === 'draft' && <button type="button" className="icon-btn icon-btn--sm" onClick={() => setItems((c) => c.filter((i) => i.key !== item.key))} aria-label={t('upload.remove')}><X size={14} /></button>}
               </div>
 

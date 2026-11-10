@@ -119,6 +119,12 @@ export function ChatPage() {
     />
   )
 
+  const attachmentList = attachments.length > 0 && (
+    <ul className="attachments" aria-label={t('chat.attach')}>
+      {attachments.map((a) => <li key={a.id}><Paperclip size={14} aria-hidden /> {t('chat.attached', { name: a.file_name })}</li>)}
+    </ul>
+  )
+
   return (
     <div className={`chat-page${panelMessage ? ' chat-page--panel' : ''}`}>
       <div className="chat-page__main">
@@ -132,7 +138,7 @@ export function ChatPage() {
           <div className="empty-state">
             <h1 className="greeting">{t('chat.greeting')}</h1>
             <p className="muted">{t('chat.subtitle')}</p>
-            <div className="empty-state__composer">{composerEl}</div>
+            <div className="empty-state__composer">{attachmentList}{composerEl}</div>
             <div className="chips">
               {appConfig.suggestions[locale].map((s) => (
                 <button key={s.label} type="button" className="chip" onClick={() => ask(s.question)} disabled={backendUp === false}>{s.label}</button>
@@ -155,11 +161,7 @@ export function ChatPage() {
                     <button type="button" className="btn btn--secondary" onClick={() => navigate('/')}>{t('sidebar.new')}</button>
                   </div>
                 )}
-                {attachments.length > 0 && (
-                  <ul className="attachments">
-                    {attachments.map((a) => <li key={a.id}><Paperclip size={14} aria-hidden /> {t('chat.attached', { name: a.file_name })}</li>)}
-                  </ul>
-                )}
+                {attachmentList}
                 {messages.map((m, index) => m.role === 'user' ? (
                   <div key={m.id} className="user-msg"><p className="sr-only">{t('chat.you')} :</p><div className="user-msg__bubble">{m.content}</div></div>
                 ) : (
