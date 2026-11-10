@@ -40,6 +40,8 @@ export type ChatMessage = {
   debug?: Debug
   stopped?: boolean
   error?: string
+  /** Quota du LLM atteint : delai avant nouvel essai (minutes). */
+  retryAfterMin?: number
   feedback?: { rating: number; comment: string | null } | null
   /** Etat local pendant la diffusion */
   pending?: boolean
@@ -135,4 +137,4 @@ export type ChatEvent =
         debug: Debug
       }
     }
-  | { event: 'error'; data: { code: string; message: string } }
+  | { event: 'error'; data: { code: string; message: string; retry_after_min?: number } }

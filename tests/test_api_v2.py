@@ -172,3 +172,19 @@ def test_conversation_crud_and_attachment(env):
     assert client.get("/api/conversations", params={"q": "Mon stage"}).json()[0]["id"] == conversation["id"]
     assert client.delete(f"/api/conversations/{conversation['id']}").status_code == 204
     assert client.get(f"/api/conversations/{conversation['id']}").status_code == 404
+
+
+def test_chat_reports_llm_quota_clearly(env):
+    from eih_rag.rag.llm import LLMQuotaExceeded
+
+    client, headers, generator = env
+    upload(client, headers, "parking.txt", PARKING, title="Règlement du parking")
+
+    def exhausted(system_prompt, user_prompt):
+        raise LLMQuotaExceeded(retry_after=417)
+        yield  # pragma: no cover
+
+    generator.stream = exhausted
+    stream = events(client.post("/api/chat", json={"message": "Où se trouve le parking à vélos ?"}))
+    error = next(data for name, data in stream if name == "error")
+    assert error["code"] == "quota" and error["retry_after_min"] == 7

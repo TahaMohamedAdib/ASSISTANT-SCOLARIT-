@@ -63,6 +63,8 @@ class Settings(BaseSettings):
     contact_phone: str = "+212 5 22 00 00 00"
     # Modele secondaire (quota distinct chez Groq) : reformulation des relances et suggestions.
     aux_model: str = "qwen/qwen3.8-27b"
+    # Attente maximale (s) quand le quota du LLM est atteint, avant d'afficher une erreur a l'etudiant.
+    llm_max_wait_s: float = Field(default=20.0, ge=0, le=600)
     history_turns: int = Field(default=3, ge=0, le=10)
 
     @property

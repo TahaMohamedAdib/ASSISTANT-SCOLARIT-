@@ -38,6 +38,7 @@ class RagService:
             openai_base_url=settings.openai_base_url,
             openai_model=settings.openai_model,
             openai_api_key=settings.openai_api_key,
+            max_wait=settings.llm_max_wait_s,
         )
         # Sans methode ``all_chunks`` (store de test), on reste en recherche dense simple.
         if retriever is None and hasattr(self.store, "all_chunks"):

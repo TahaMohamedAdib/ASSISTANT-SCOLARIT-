@@ -3,7 +3,10 @@ import { api, ApiError } from '../api/client'
 import type { ChatMessage, ConversationDetail, StoredMessage } from '../types'
 
 export function fromStored(message: StoredMessage): ChatMessage {
-  return { id: message.id, role: message.role, content: message.content, created_at: message.created_at, feedback: message.feedback, ...message.payload }
+  const restored: ChatMessage = { id: message.id, role: message.role, content: message.content, created_at: message.created_at, feedback: message.feedback, ...message.payload }
+  // Les erreurs enregistrees cote serveur sont des messages bruts : on les ramene a une categorie connue.
+  if (restored.error) restored.error = /quota/i.test(restored.error) ? 'quota' : 'llm'
+  return restored
 }
 
 type Options = {
@@ -89,7 +92,10 @@ export function useChat({ conversationId, topK, docType, onConversation }: Optio
             followups: data.followups, debug: data.debug, pending: false, stage: undefined,
           }))
           onConversation(data.conversation_id, false)
-        } else if (event === 'error') patchLast((m) => ({ ...m, pending: false, error: 'llm', stage: undefined }))
+        } else if (event === 'error') {
+          const quota = data.code === 'quota'
+          patchLast((m) => ({ ...m, pending: false, stage: undefined, error: quota ? 'quota' : 'llm', retryAfterMin: data.retry_after_min }))
+        }
       }
     } catch (error) {
       if (abort.signal.aborted) patchLast((m) => ({ ...m, pending: false, stopped: true, stage: undefined }))

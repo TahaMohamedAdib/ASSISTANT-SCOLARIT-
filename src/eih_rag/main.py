@@ -23,7 +23,7 @@ from .db import Database
 from .documents import DOC_TYPES, DocumentConflict, DocumentService
 from .evaluation import EvaluationService
 from .loaders import ALLOWED_EXTENSIONS, UploadRejected
-from .rag.llm import LLMUnavailable
+from .rag.llm import LLMQuotaExceeded, LLMUnavailable
 from .rag.service import RagService
 from .rag.store import StoreUnavailable
 from .schemas import AskRequest, AskResponse, HealthResponse, IngestRequest, SearchRequest, SearchResponse
@@ -244,6 +244,9 @@ def create_app(
             return service.ask(payload)
         except StoreUnavailable as error:
             raise HTTPException(status_code=503, detail=str(error)) from error
+        except LLMQuotaExceeded as error:
+            headers = {"Retry-After": str(int(error.retry_after))} if error.retry_after else None
+            raise HTTPException(status_code=429, detail=str(error), headers=headers) from error
         except LLMUnavailable as error:
             raise HTTPException(status_code=502, detail=str(error)) from error
 

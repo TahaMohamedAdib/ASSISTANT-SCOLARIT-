@@ -118,6 +118,21 @@ describe('ecran de conversation', () => {
     expect(screen.getByRole('button', { name: /réessayer/i })).toBeInTheDocument()
   })
 
+  it('explique clairement un quota de LLM atteint', async () => {
+    installFakeApi({
+      'POST /api/chat': () => sse([
+        ['conversation', { conversation_id: 'c3' }],
+        ['meta', { rewritten_query: null, citations: [citation] }],
+        ['error', { code: 'quota', message: 'Quota', retry_after_min: 7 }],
+      ]),
+      'GET /api/conversations/c3': () => json({ id: 'c3', title: 'x', messages: [], attachments: [] }),
+    })
+    const user = userEvent.setup()
+    renderApp()
+    await user.type(await screen.findByLabelText(/posez votre question/i), 'Durée du PFE ?{Enter}')
+    expect(await screen.findByText(/quota gratuit du modèle de langage est atteint\. Réessayez dans environ 7 min/i)).toBeInTheDocument()
+  })
+
   it('affiche un bandeau quand le backend est injoignable', async () => {
     installFakeApi({ 'GET /api/health': () => { throw new TypeError('Failed to fetch') } })
     renderApp()

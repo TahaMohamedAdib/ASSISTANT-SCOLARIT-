@@ -88,7 +88,7 @@ export function AssistantMessage({ message, isLast, busy, onCite, onRegenerate, 
       {message.stopped && <p className="note">{t('chat.stopped')}</p>}
       {message.error && (
         <div className="inline-error" role="alert">
-          <span>{t(errorKey[message.error] ?? 'errors.server')}</span>
+          <span>{message.error === 'quota' ? t('errors.quota', { min: message.retryAfterMin ?? '…' }) : t(errorKey[message.error] ?? 'errors.server')}</span>
           {isLast && <button type="button" className="btn btn--secondary" onClick={onRetry}><RotateCcw size={16} aria-hidden /> {t('errors.retry')}</button>}
         </div>
       )}

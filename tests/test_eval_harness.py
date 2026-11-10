@@ -71,3 +71,19 @@ def test_generator_and_judge_caches_do_not_overwrite_each_other(tmp_path, monkey
     generator.save()
     judge.save()  # ne doit pas effacer la reponse du generateur
     assert len(json.loads((tmp_path / "cache.json").read_text(encoding="utf-8"))) == 2
+
+
+def test_interactive_client_fails_fast_when_daily_quota_is_exhausted(monkeypatch):
+    import httpx
+    import pytest
+
+    import eih_rag.rag.llm as llm
+
+    request = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")
+    quota = httpx.Response(429, headers={"retry-after": "417"}, json={"error": {"message": "tokens per day (TPD)"}}, request=request)
+    monkeypatch.setattr(llm.httpx, "post", lambda *a, **k: quota)
+    monkeypatch.setattr(llm.time, "sleep", lambda s: pytest.fail("ne doit pas attendre 7 minutes"))
+    client = llm.OpenAICompatibleGenerator("https://api.groq.com/openai/v1", "m", "k", max_wait=20)
+    with pytest.raises(llm.LLMQuotaExceeded) as error:
+        client.generate("s", "u")
+    assert error.value.retry_after == 417 and "7 min" in str(error.value)

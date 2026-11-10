@@ -23,7 +23,7 @@ from .config import Settings
 from .db import Database, new_id, now
 from .loaders import load_document, validate_upload
 from .models import DocumentMetadata
-from .rag.llm import OpenAICompatibleGenerator, strip_thinking
+from .rag.llm import LLMQuotaExceeded, OpenAICompatibleGenerator, strip_thinking
 from .rag.prompting import NO_ANSWER, SYSTEM_PROMPT, build_user_prompt, is_refusal, mentions_not_found, normalize_citations
 from .rag.service import RagService
 from .rag.store import RetrievedChunk
@@ -49,7 +49,8 @@ class ChatService:
         self.rag = rag
         # Modele secondaire sur un quota distinct ; a defaut, le generateur principal.
         if settings.llm_provider == "openai_compatible" and settings.aux_model:
-            self.aux = OpenAICompatibleGenerator(settings.openai_base_url, settings.aux_model, settings.openai_api_key)
+            # Appels accessoires (relance, suggestions) : jamais d'attente de quota, on s'en passe.
+            self.aux = OpenAICompatibleGenerator(settings.openai_base_url, settings.aux_model, settings.openai_api_key, max_wait=0)
         else:
             self.aux = rag.generator
 
@@ -230,7 +231,12 @@ class ChatService:
             stopped = False
         except Exception as error:  # pragma: no cover - fournisseur LLM
             answer = answer or ""
-            yield sse("error", {"code": "llm_unavailable", "message": "Le modèle de langage ne répond pas pour le moment."})
+            if isinstance(error, LLMQuotaExceeded):
+                minutes = max(1, round((error.retry_after or 60) / 60))
+                yield sse("error", {"code": "quota", "retry_after_min": minutes,
+                                    "message": f"Le quota du modèle de langage est atteint. Réessayez dans environ {minutes} min."})
+            else:
+                yield sse("error", {"code": "llm_unavailable", "message": "Le modèle de langage ne répond pas pour le moment."})
             stopped = False
             self._save_assistant(conversation_id, answer, citations, debug, timings, started, error=str(error))
             return

@@ -164,6 +164,7 @@ La documentation interactive est disponible sur <http://localhost:8000/docs>.
 | `RAG_MAX_UPLOAD_MB` | `20` | Taille maximale d'un fichier téléversé ou joint |
 | `RAG_REQUIRE_REVIEW` | `false` | Validation manuelle des documents téléversés avant indexation |
 | `RAG_CONTACT_EMAIL` / `RAG_CONTACT_PHONE` | `scolarite@eih.ma` / `+212 5 22 00 00 00` | Contact affiché quand une réponse est introuvable |
+| `RAG_LLM_MAX_WAIT_S` | `20` | Attente maximale quand le quota du LLM est atteint ; au-delà, l'étudiant voit « quota atteint, réessayez dans N min » |
 | `RAG_AUX_MODEL` | `qwen/qwen3.8-27b` | Modèle léger pour la reformulation des relances et les questions de suivi |
 | `VITE_API_BASE_URL` (frontend) | `http://localhost:8000` | Adresse de l'API |
 
@@ -191,11 +192,11 @@ Les résultats sont ajoutés à `eval/results/*.csv` ; le détail par question e
 ## Tests
 
 ```powershell
-python -m pytest -q                  # 40 tests : extraction, découpage, recherche, API v2 (auth, téléversement,
+python -m pytest -q                  # 42 tests : extraction, découpage, recherche, API v2 (auth, téléversement,
                                      # versions, chat SSE, relances, pièces jointes, retours), évaluation
 Set-Location frontend
-npm test                             # 11 tests de composants (vitest) : chat, citations, panneau Sources, introuvable,
-                                     # erreurs réseau, bandeau serveur, téléversement, doublons
+npm test                             # 12 tests de composants (vitest) : chat, citations, panneau Sources, introuvable,
+                                     # erreurs réseau, quota LLM, bandeau serveur, téléversement, doublons
 npx playwright install chromium      # une seule fois
 npm run e2e                          # bout en bout, bureau et mobile : connexion admin -> téléversement -> question -> citation
 npm run build
@@ -209,6 +210,6 @@ Le test de bout en bout démarre son propre backend (`frontend/e2e/server.py`, p
 - **Historique partagé** : faute de comptes étudiants, toutes les conversations sont visibles de tous les utilisateurs de l'instance.
 - **Pas d'OCR** : un PDF scanné (image) sera indexé sans texte ; le document passera en « Indexé » avec très peu de fragments.
 - **Surlignage dans le panneau Sources, pas dans le PDF** : « Ouvrir le document » ouvre le PDF à la bonne page (`#page=N`), sans surlignage dans le lecteur.
-- **Quotas de l'offre gratuite Groq** (8 000 jetons par minute, 1 000 requêtes par jour et par modèle) : sous charge, les réponses attendent le délai indiqué par Groq. Une réponse consomme deux à trois appels (relance éventuelle, réponse, suggestions).
+- **Quotas de l'offre gratuite Groq** : 8 000 jetons par minute, 1 000 requêtes et surtout **200 000 jetons par jour et par modèle**. Une réponse consomme environ 4 000 jetons (6 extraits) plus un appel accessoire, soit une cinquantaine de questions par jour. Au-delà, l'application affiche « quota atteint, réessayez dans N min » au lieu d'attendre (voir `RAG_LLM_MAX_WAIT_S`) ; les relances et suggestions sont alors simplement omises. Pour un usage réel, il faut une offre payante ou un LLM local (Ollama).
 - Les fichiers joints (mode B) sont conservés avec la conversation et supprimés avec elle ; on ne peut pas retirer un fichier d'une conversation existante.
 - L'interface est prête pour l'arabe (mise en page en propriétés logiques, `dir` géré), mais seules les traductions française et anglaise existent.
