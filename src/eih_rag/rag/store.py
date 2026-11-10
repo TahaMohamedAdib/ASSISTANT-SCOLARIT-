@@ -33,6 +33,9 @@ class RetrievedChunk:
     document_type: str | None = None
     # Score absolu dans [0, 1] utilise pour le seuil de refus (cosinus ou reranker).
     relevance: float | None = None
+    document_id: str | None = None
+    # Methodes ayant trouve le fragment : "dense", "bm25", "rerank" (mode transparence).
+    methods: tuple[str, ...] = ()
 
 
 class ChromaStore:
@@ -92,6 +95,7 @@ class ChromaStore:
             "section": chunk.section or "",
             "section_path": chunk.section_path or "",
             "title": chunk.title or "",
+            "document_id": chunk.document_id or "",
             "strategy": chunk.strategy,
         }
 
@@ -107,20 +111,74 @@ class ChromaStore:
                 embedding_function=None,
                 metadata={"hnsw:space": "cosine"},
             )
-            for offset in range(0, len(chunks), 64):
-                batch = chunks[offset : offset + 64]
-                self.collection.upsert(
-                    ids=[chunk.id for chunk in batch],
-                    documents=[chunk.text for chunk in batch],
-                    metadatas=[self._metadata(chunk) for chunk in batch],
-                    # On indexe le texte enrichi (titre + hierarchie) mais on stocke le texte brut.
-                    embeddings=self.embedder.embed_documents([chunk.index_text for chunk in batch]),
-                )
+            self._upsert(chunks)
         except StoreUnavailable:
             raise
         except Exception as error:  # pragma: no cover - Chroma / model boundary
             raise StoreUnavailable(f"Echec de l'indexation Chroma : {error}") from error
         self.version += 1
+
+    def _upsert(self, chunks: list[Chunk], progress=None) -> None:
+        for offset in range(0, len(chunks), 32):
+            batch = chunks[offset : offset + 32]
+            self.collection.upsert(
+                ids=[chunk.id for chunk in batch],
+                documents=[chunk.text for chunk in batch],
+                metadatas=[self._metadata(chunk) for chunk in batch],
+                # On indexe le texte enrichi (titre + hierarchie) mais on stocke le texte brut.
+                embeddings=self.embedder.embed_documents([chunk.index_text for chunk in batch]),
+            )
+            if progress:
+                progress(min(offset + len(batch), len(chunks)), len(chunks))
+
+    def add_document(self, document_id: str, chunks: list[Chunk], progress=None) -> None:
+        """Indexation incrementale : seuls les fragments de ce document sont vectorises."""
+        try:
+            self.delete_document(document_id, bump=False)
+            self._upsert(chunks, progress)
+        except StoreUnavailable:
+            raise
+        except Exception as error:  # pragma: no cover - Chroma / model boundary
+            raise StoreUnavailable(f"Echec de l'indexation Chroma : {error}") from error
+        self.version += 1
+
+    def delete_document(self, document_id: str, bump: bool = True) -> None:
+        try:
+            self.collection.delete(where={"document_id": {"$eq": document_id}})
+        except Exception as error:  # pragma: no cover - Chroma boundary
+            raise StoreUnavailable(f"Suppression Chroma impossible : {error}") from error
+        if bump:
+            self.version += 1
+
+    def delete_orphans(self, known_ids: set[str]) -> int:
+        """Supprime les fragments sans document_id (ancienne ingestion globale) ou d'un document inconnu.
+
+        Un filtre ``where document_id == ""`` ne trouve pas les fragments dont la cle est
+        absente : on supprime donc par identifiant.
+        """
+        data = self.collection.get(include=["metadatas"])
+        orphans = [
+            item_id for item_id, metadata in zip(data.get("ids") or [], data.get("metadatas") or [])
+            if str((metadata or {}).get("document_id") or "") not in known_ids
+        ]
+        for offset in range(0, len(orphans), 500):
+            self.collection.delete(ids=orphans[offset : offset + 500])
+        if orphans:
+            self.version += 1
+        return len(orphans)
+
+    def document_chunk_counts(self) -> dict[str, int]:
+        data = self.collection.get(include=["metadatas"])
+        counts: dict[str, int] = {}
+        for metadata in data.get("metadatas") or []:
+            key = str((metadata or {}).get("document_id") or "")
+            counts[key] = counts.get(key, 0) + 1
+        return counts
+
+    def document_chunks(self, document_id: str) -> list[RetrievedChunk]:
+        data = self.collection.get(where={"document_id": {"$eq": document_id}}, include=["documents", "metadatas"])
+        chunks = [self._to_chunk(i, t, m, 0.0) for i, t, m in zip(data.get("ids") or [], data.get("documents") or [], data.get("metadatas") or [])]
+        return sorted(chunks, key=lambda chunk: chunk.id)
 
     @staticmethod
     def _to_chunk(item_id: str, text: str, metadata: dict | None, score: float) -> RetrievedChunk:
@@ -139,6 +197,7 @@ class ChromaStore:
             section_path=str(metadata.get("section_path") or "") or None,
             document_type=str(metadata.get("document_type") or "") or None,
             relevance=score,
+            document_id=str(metadata.get("document_id") or "") or None,
         )
 
     def all_chunks(self) -> tuple[list[RetrievedChunk], list[list[float]]]:

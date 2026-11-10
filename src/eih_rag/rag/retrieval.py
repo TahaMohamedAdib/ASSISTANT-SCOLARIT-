@@ -179,17 +179,19 @@ class HybridRetriever:
             queries += [query for query in self.rewriter.rewrite(question) if query.lower() != question.lower()]
 
         fused: dict[str, float] = {}
+        methods: dict[str, set[str]] = {}
 
-        def add(ranked_ids: list[str], weight: float) -> None:
+        def add(ranked_ids: list[str], weight: float, method: str) -> None:
             for rank, chunk_id in enumerate(ranked_ids, start=1):
                 fused[chunk_id] = fused.get(chunk_id, 0.0) + weight / (cfg.rrf_k + rank)
+                methods.setdefault(chunk_id, set()).add(method)
 
         for query in queries:
             if cfg.mode in ("dense", "hybrid"):
                 dense_ids = [hit.id for hit in self.store.search(query, cfg.candidate_k, document_type)]
-                add(dense_ids, cfg.dense_weight if cfg.mode == "hybrid" else 1.0)
+                add(dense_ids, cfg.dense_weight if cfg.mode == "hybrid" else 1.0, "dense")
             if cfg.mode in ("bm25", "hybrid"):
-                add(self._bm25_search(query, cfg.candidate_k, document_type), (1.0 - cfg.dense_weight) if cfg.mode == "hybrid" else 1.0)
+                add(self._bm25_search(query, cfg.candidate_k, document_type), (1.0 - cfg.dense_weight) if cfg.mode == "hybrid" else 1.0, "bm25")
 
         by_id = {chunk.id: chunk for chunk in self._chunks}
         ranked = sorted(fused, key=fused.get, reverse=True)
@@ -199,9 +201,12 @@ class HybridRetriever:
             candidates = ranked[: cfg.rerank_candidates]
             scores = self.reranker.score(question, [self._index_text(by_id[cid]) for cid in candidates])
             ordered = sorted(zip(candidates, scores), key=lambda item: item[1], reverse=True)[:top_k]
-            return [replace(by_id[cid], score=round(float(score), 4), relevance=round(float(score), 4)) for cid, score in ordered]
+            return [
+                replace(by_id[cid], score=round(float(score), 4), relevance=round(float(score), 4), methods=tuple(sorted(methods.get(cid, ()))) + ("rerank",))
+                for cid, score in ordered
+            ]
 
         return [
-            replace(by_id[cid], score=round(fused[cid], 5), relevance=round(cosine.get(cid, 0.0), 4))
+            replace(by_id[cid], score=round(fused[cid], 5), relevance=round(cosine.get(cid, 0.0), 4), methods=tuple(sorted(methods.get(cid, ()))))
             for cid in ranked[:top_k]
         ]

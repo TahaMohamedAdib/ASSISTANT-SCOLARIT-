@@ -42,6 +42,11 @@ class AnswerGenerator(Protocol):
     def generate(self, system_prompt: str, user_prompt: str) -> str: ...
 
 
+def strip_thinking(text: str) -> str:
+    """Retire les blocs de raisonnement <think>...</think> de certains modeles."""
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+
 class OllamaGenerator:
     def __init__(self, base_url: str, model: str) -> None:
         self.base_url = base_url.rstrip("/")
@@ -61,6 +66,27 @@ class OllamaGenerator:
         if not answer:
             raise LLMUnavailable("Ollama a retourne une reponse vide.")
         return answer
+
+
+    def stream(self, system_prompt: str, user_prompt: str):
+        """Flux de jetons (NDJSON Ollama)."""
+        import json
+
+        try:
+            with httpx.stream(
+                "POST",
+                f"{self.base_url}/api/chat",
+                json={"model": self.model, "stream": True, "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]},
+                timeout=120.0,
+            ) as response:
+                response.raise_for_status()
+                for line in response.iter_lines():
+                    if line.strip():
+                        token = json.loads(line).get("message", {}).get("content", "")
+                        if token:
+                            yield token
+        except (httpx.HTTPError, ValueError) as error:
+            raise LLMUnavailable(f"Ollama ne repond pas : {error}") from error
 
 
 class OpenAICompatibleGenerator:
@@ -95,6 +121,48 @@ class OpenAICompatibleGenerator:
         if not answer:
             raise LLMUnavailable("Le fournisseur LLM a retourne une reponse vide.")
         return answer
+
+
+def _openai_stream(self, system_prompt: str, user_prompt: str, model: str | None = None):
+    """Flux de jetons Server-Sent Events (API OpenAI-compatible : Groq).
+
+    Les quotas (429) sont geres avant le premier jeton ; ensuite le flux est
+    transmis tel quel.
+    """
+    import json
+
+    if not self.api_key:
+        raise LLMUnavailable("OPENAI_MODEL et OPENAI_API_KEY doivent etre renseignes.")
+    payload = {
+        "model": model or self.model, "stream": True, "temperature": 0,
+        "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+    }
+    try:
+        for attempt in range(self.max_retries + 1):
+            with httpx.stream("POST", f"{self.base_url}/chat/completions", headers={"Authorization": f"Bearer {self.api_key}"}, json=payload, timeout=120.0) as response:
+                if response.status_code in (429, 500, 502, 503) and attempt < self.max_retries:
+                    response.read()
+                    time.sleep(_retry_delay(response, attempt))
+                    continue
+                if response.status_code >= 400:
+                    response.read()
+                    response.raise_for_status()
+                for line in response.iter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    data = line[5:].strip()
+                    if data == "[DONE]":
+                        return
+                    choices = json.loads(data).get("choices") or [{}]
+                    token = (choices[0].get("delta") or {}).get("content")
+                    if token:
+                        yield token
+                return
+    except (httpx.HTTPError, ValueError) as error:
+        raise LLMUnavailable(f"Le fournisseur OpenAI-compatible ne repond pas : {error}") from error
+
+
+OpenAICompatibleGenerator.stream = _openai_stream
 
 
 def build_generator(provider: str, *, ollama_base_url: str, ollama_model: str, openai_base_url: str, openai_model: str, openai_api_key: str) -> AnswerGenerator:

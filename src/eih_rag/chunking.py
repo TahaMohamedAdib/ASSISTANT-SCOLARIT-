@@ -13,6 +13,8 @@ from .models import Chunk, DocumentMetadata, ExtractedPage
 _TITRE = re.compile(r"^Titre\s+(?:[IVXLCDM]+|\d+)\s*[-–—].+", re.IGNORECASE)
 _ARTICLE = re.compile(r"^Article\s+\d+\s*[-–—].+", re.IGNORECASE)
 _FAQ = re.compile(r"^Q\d+\.\s+.+", re.IGNORECASE)
+# Titres Markdown produits par les chargeurs DOCX / HTML / MD ("## Section").
+_MARKDOWN = re.compile(r"^(#{1,6})\s+\S")
 # "1. Presentation" ou "5.2 Choix du sujet" ; le point final est facultatif apres un sous-numero.
 _NUMBERED = re.compile(r"^(\d+(?:\.\d+)*)\.?\s+(.+)$")
 
@@ -38,6 +40,9 @@ def _numbered_heading_level(line: str) -> int | None:
 def heading_level(line: str) -> int | None:
     """1 = Titre, 2 = Article / section / question FAQ, 3+ = sous-section."""
     line = line.strip()
+    markdown = _MARKDOWN.match(line)
+    if markdown:
+        return len(markdown.group(1))
     if _TITRE.match(line):
         return 1
     if _ARTICLE.match(line) or _FAQ.match(line):
@@ -196,8 +201,9 @@ def _structural_units(pages: Iterable[ExtractedPage]) -> list[tuple[int, str | N
             flush(page.page)
             for deeper in [existing for existing in stack if existing >= level]:
                 del stack[deeper]
-            stack[level] = line
-            buffer = [line]
+            label = line.lstrip("#").strip()
+            stack[level] = label
+            buffer = [label]
         flush(page.page)
     return units
 
