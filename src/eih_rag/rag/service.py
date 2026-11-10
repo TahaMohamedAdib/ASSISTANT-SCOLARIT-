@@ -65,9 +65,13 @@ class RagService:
             reference=chunk.reference,
             date=chunk.date,
             page=chunk.page,
-            section=chunk.section,
             excerpt=chunk.text,
             score=chunk.relevance if chunk.relevance is not None else chunk.score,
+            title=chunk.title,
+            document_id=chunk.document_id,
+            document_type=chunk.document_type,
+            section=chunk.section_path or chunk.section,
+            methods=list(chunk.methods),
         )
 
     def ingest(self, request: IngestRequest) -> IngestResponse:

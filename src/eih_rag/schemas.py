@@ -57,6 +57,10 @@ class Source(BaseModel):
     section: str | None = None
     excerpt: str
     score: float
+    title: str | None = None
+    document_id: str | None = None
+    document_type: str | None = None
+    methods: list[str] = []
 
 
 class SearchResponse(BaseModel):
