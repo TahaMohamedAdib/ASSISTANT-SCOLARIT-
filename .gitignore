@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.env
+data/chroma/
+data/index_manifest.json
+frontend/node_modules/
+frontend/dist/
+
+# Runtime data (rebuilt by ingestion / created by the app)
+data/app.db*
+data/uploads/
+data/chunks*.json
+eval/results/llm_cache.json
+eval/results/log_*.txt
+
+# Local artefacts
+*.log
+corpus.zip
+__MACOSX/
+frontend/node_modules/.vite/
+frontend/test-results/
+frontend/playwright-report/

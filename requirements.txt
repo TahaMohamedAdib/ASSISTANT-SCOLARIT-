@@ -1,0 +1,16 @@
+# Python 3.12 recommended (Python 3.14 lacks wheels for torch on this setup).
+# CPU-only torch: pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+pdfplumber==0.11.10
+pypdf==6.21.4
+fastapi==0.162.2
+uvicorn[standard]==0.54.0
+pydantic-settings==2.16.2
+python-dotenv==1.2.4
+chromadb==1.5.9
+torch==2.15.0
+transformers==4.57.6
+sentence-transformers==3.4.1
+rank-bm25==0.2.2
+numpy==2.5.4
+httpx==0.28.1
+pytest==9.2.0

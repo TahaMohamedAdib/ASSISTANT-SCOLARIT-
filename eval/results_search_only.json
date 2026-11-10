@@ -1,0 +1,579 @@
+{
+  "questions": 20,
+  "search_only": true,
+  "run_label": "hashing-offline",
+  "results": [
+    {
+      "configuration": {
+        "strategy": "structural",
+        "chunk_size": 500,
+        "overlap": 100
+      },
+      "ingestion": {
+        "documents_indexed": 7,
+        "chunks_indexed": 142,
+        "strategy": {
+          "strategy": "structural",
+          "chunk_size": 500,
+          "overlap": 100
+        }
+      },
+      "metrics": {
+        "hit_at_5": 0.9333333333333333,
+        "mrr": 0.76,
+        "answer_accuracy_mean_0_to_2": null,
+        "faithfulness_rate": null,
+        "correct_refusal_rate": null,
+        "false_refusal_rate": null
+      },
+      "rows": [
+        {
+          "id": "simple_01",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-BVE-GUIDE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "simple_02",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-SRE-GUIDE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-BVE-GUIDE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "simple_03",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-DE-NS-2026-14",
+            "EIH-DE-NS-2026-14",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-SRE-GUIDE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 0.2
+        },
+        {
+          "id": "simple_04",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-SCOL-FAQ-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-DE-REG-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "simple_05",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-DE-REG-2026",
+            "EIH-DE-NS-2026-14",
+            "EIH-SCOL-FAQ-2026"
+          ],
+          "hit_at_5": 0.0,
+          "reciprocal_rank": 0.0
+        },
+        {
+          "id": "simple_06",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-SCOL-FAQ-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-DE-REG-2026",
+            "EIH-BVE-GUIDE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 0.2
+        },
+        {
+          "id": "simple_07",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-BVE-GUIDE-2026",
+            "EIH-DE-REG-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-BVE-GUIDE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 0.5
+        },
+        {
+          "id": "simple_08",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-BRI-CHARTE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "synthese_01",
+          "category": "synthese",
+          "retrieved_references": [
+            "EIH-BVE-GUIDE-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-BRI-CHARTE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "synthese_02",
+          "category": "synthese",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-DE-REG-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "synthese_03",
+          "category": "synthese",
+          "retrieved_references": [
+            "EIH-DE-NS-2026-14",
+            "EIH-DE-NS-2026-14",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-DE-CAL-2026",
+            "EIH-SRE-GUIDE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "synthese_04",
+          "category": "synthese",
+          "retrieved_references": [
+            "EIH-SCOL-FAQ-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-DE-REG-2026",
+            "EIH-SRE-GUIDE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "synthese_05",
+          "category": "synthese",
+          "retrieved_references": [
+            "EIH-SRE-GUIDE-2026",
+            "EIH-DE-NS-2026-14",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-SRE-GUIDE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "version_01",
+          "category": "version",
+          "retrieved_references": [
+            "EIH-DE-NS-2026-14",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-DE-NS-2026-14"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "version_02",
+          "category": "version",
+          "retrieved_references": [
+            "EIH-SCOL-FAQ-2026",
+            "EIH-DE-NS-2026-14",
+            "EIH-DE-NS-2026-14",
+            "EIH-DE-NS-2026-14",
+            "EIH-DE-NS-2026-14"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 0.5
+        },
+        {
+          "id": "hors_corpus_01",
+          "category": "hors_corpus",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-DE-NS-2026-14",
+            "EIH-DE-REG-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-DE-REG-2026"
+          ],
+          "hit_at_5": null,
+          "reciprocal_rank": null
+        },
+        {
+          "id": "hors_corpus_02",
+          "category": "hors_corpus",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-DE-REG-2026",
+            "EIH-DE-NS-2026-14"
+          ],
+          "hit_at_5": null,
+          "reciprocal_rank": null
+        },
+        {
+          "id": "hors_corpus_03",
+          "category": "hors_corpus",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-DE-NS-2026-14",
+            "EIH-DE-REG-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-SRE-GUIDE-2026"
+          ],
+          "hit_at_5": null,
+          "reciprocal_rank": null
+        },
+        {
+          "id": "hors_corpus_04",
+          "category": "hors_corpus",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-DE-REG-2026",
+            "EIH-DE-REG-2026",
+            "EIH-DE-REG-2026",
+            "EIH-DE-NS-2026-14"
+          ],
+          "hit_at_5": null,
+          "reciprocal_rank": null
+        },
+        {
+          "id": "hors_corpus_05",
+          "category": "hors_corpus",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-DE-REG-2026",
+            "EIH-DE-REG-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-DE-REG-2026"
+          ],
+          "hit_at_5": null,
+          "reciprocal_rank": null
+        }
+      ]
+    },
+    {
+      "configuration": {
+        "strategy": "fixed",
+        "chunk_size": 500,
+        "overlap": 100
+      },
+      "ingestion": {
+        "documents_indexed": 7,
+        "chunks_indexed": 111,
+        "strategy": {
+          "strategy": "fixed",
+          "chunk_size": 500,
+          "overlap": 100
+        }
+      },
+      "metrics": {
+        "hit_at_5": 1.0,
+        "mrr": 0.888888888888889,
+        "answer_accuracy_mean_0_to_2": null,
+        "faithfulness_rate": null,
+        "correct_refusal_rate": null,
+        "false_refusal_rate": null
+      },
+      "rows": [
+        {
+          "id": "simple_01",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-BVE-GUIDE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "simple_02",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-SRE-GUIDE-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-SCOL-FAQ-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "simple_03",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-DE-NS-2026-14",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-DE-NS-2026-14",
+            "EIH-DE-NS-2026-14"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 0.5
+        },
+        {
+          "id": "simple_04",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-SCOL-FAQ-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-DE-REG-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "simple_05",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-BVE-GUIDE-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-DE-REG-2026",
+            "EIH-DE-NS-2026-14",
+            "EIH-BRI-CHARTE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "simple_06",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-SCOL-FAQ-2026",
+            "EIH-DE-REG-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-DE-REG-2026",
+            "EIH-BRI-CHARTE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 0.3333333333333333
+        },
+        {
+          "id": "simple_07",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-BVE-GUIDE-2026",
+            "EIH-DE-REG-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-SCOL-FAQ-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 0.5
+        },
+        {
+          "id": "simple_08",
+          "category": "simple",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-BRI-CHARTE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "synthese_01",
+          "category": "synthese",
+          "retrieved_references": [
+            "EIH-BVE-GUIDE-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-BVE-GUIDE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "synthese_02",
+          "category": "synthese",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-DE-REG-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-SCOL-FAQ-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "synthese_03",
+          "category": "synthese",
+          "retrieved_references": [
+            "EIH-DE-NS-2026-14",
+            "EIH-DE-NS-2026-14",
+            "EIH-DE-CAL-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-SRE-GUIDE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "synthese_04",
+          "category": "synthese",
+          "retrieved_references": [
+            "EIH-SCOL-FAQ-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-SCOL-FAQ-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "synthese_05",
+          "category": "synthese",
+          "retrieved_references": [
+            "EIH-SRE-GUIDE-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-DE-NS-2026-14",
+            "EIH-SRE-GUIDE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "version_01",
+          "category": "version",
+          "retrieved_references": [
+            "EIH-DE-NS-2026-14",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-DE-NS-2026-14",
+            "EIH-BRI-CHARTE-2026"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "version_02",
+          "category": "version",
+          "retrieved_references": [
+            "EIH-DE-NS-2026-14",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-DE-NS-2026-14",
+            "EIH-DE-CAL-2026",
+            "EIH-DE-NS-2026-14"
+          ],
+          "hit_at_5": 1.0,
+          "reciprocal_rank": 1.0
+        },
+        {
+          "id": "hors_corpus_01",
+          "category": "hors_corpus",
+          "retrieved_references": [
+            "EIH-SCOL-FAQ-2026",
+            "EIH-DE-REG-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-DE-NS-2026-14"
+          ],
+          "hit_at_5": null,
+          "reciprocal_rank": null
+        },
+        {
+          "id": "hors_corpus_02",
+          "category": "hors_corpus",
+          "retrieved_references": [
+            "EIH-DE-REG-2026",
+            "EIH-BVE-GUIDE-2026",
+            "EIH-BRI-CHARTE-2026",
+            "EIH-DE-REG-2026",
+            "EIH-DE-REG-2026"
+          ],
+          "hit_at_5": null,
+          "reciprocal_rank": null
+        },
+        {
+          "id": "hors_corpus_03",
+          "category": "hors_corpus",
+          "retrieved_references": [
+            "EIH-DE-REG-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-BRI-CHARTE-2026"
+          ],
+          "hit_at_5": null,
+          "reciprocal_rank": null
+        },
+        {
+          "id": "hors_corpus_04",
+          "category": "hors_corpus",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-DE-REG-2026",
+            "EIH-SRE-GUIDE-2026",
+            "EIH-DE-REG-2026"
+          ],
+          "hit_at_5": null,
+          "reciprocal_rank": null
+        },
+        {
+          "id": "hors_corpus_05",
+          "category": "hors_corpus",
+          "retrieved_references": [
+            "EIH-BRI-CHARTE-2026",
+            "EIH-DE-REG-2026",
+            "EIH-DE-REG-2026",
+            "EIH-SCOL-FAQ-2026",
+            "EIH-BVE-GUIDE-2026"
+          ],
+          "hit_at_5": null,
+          "reciprocal_rank": null
+        }
+      ]
+    }
+  ]
+}
