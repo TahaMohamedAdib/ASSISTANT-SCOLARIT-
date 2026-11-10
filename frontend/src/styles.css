@@ -541,6 +541,7 @@ input[type='range'] { accent-color: var(--accent); min-block-size: var(--touch);
   .user-msg__bubble { max-inline-size: 92%; }
   .empty-state { padding-block-end: 4vh; }
   .history-item__more { opacity: 1; }
+  .toolbar > .search-field, .toolbar > select { flex: 1 1 100%; }
   /* Tableau en cartes */
   .doc-table thead { display: none; }
   .doc-table, .doc-table tbody, .doc-table tr, .doc-table th, .doc-table td { display: block; inline-size: 100%; }
@@ -550,6 +551,8 @@ input[type='range'] { accent-color: var(--accent); min-block-size: var(--touch);
   .doc-table .num { text-align: start; }
   .row-actions { text-align: start; }
 }
+
+.fatal { min-block-size: 100dvh; display: grid; place-content: center; justify-items: center; gap: 12px; padding: 24px; text-align: center; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }

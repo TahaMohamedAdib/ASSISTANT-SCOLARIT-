@@ -39,7 +39,7 @@ describe('televersement admin', () => {
     await user.click(screen.getByRole('button', { name: 'Téléverser' }))
 
     expect(await screen.findByText(/le document est maintenant utilisé/i, {}, { timeout: 4000 })).toBeInTheDocument()
-    const form = calls.find((c) => c.path === '/api/documents')!.body as FormData
+    const form = calls.find((c) => c.method === 'POST' && c.path === '/api/documents')!.body as FormData
     expect(form.get('title')).toBe('Règlement du parking')
     expect((form.get('file') as File).name).toBe('parking.md')
     expect(onChanged).toHaveBeenCalled()
@@ -51,7 +51,7 @@ describe('televersement admin', () => {
     renderPanel()
     await user.upload(await screen.findByTestId('upload-input'), file('virus.exe', 'MZ'))
     expect(screen.getByText('Format non accepté.')).toBeInTheDocument()
-    expect(calls.some((c) => c.path === '/api/documents')).toBe(false)
+    expect(calls.some((c) => c.method === 'POST' && c.path === '/api/documents')).toBe(false)
   })
 
   it('propose de remplacer la version existante en cas de doublon', async () => {
@@ -67,7 +67,7 @@ describe('televersement admin', () => {
     expect(await screen.findByText('Ce fichier est déjà dans le corpus.')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /remplacer par une nouvelle version/i }))
-    const last = calls.filter((c) => c.path === '/api/documents').at(-1)!.body as FormData
+    const last = calls.filter((c) => c.method === 'POST' && c.path === '/api/documents').at(-1)!.body as FormData
     expect(last.get('replace_id')).toBe('d1')
   })
 })

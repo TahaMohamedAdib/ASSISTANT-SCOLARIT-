@@ -186,6 +186,7 @@ const fr = {
   'admin.offline': 'Résultats du banc complet (81 questions)',
   'admin.loginRequired': 'Connectez-vous en tant qu’administrateur pour accéder à cette page.',
   'admin.times': '× {n}',
+  'admin.satisfaction': 'de satisfaction',
 } as const
 
 export type StringKey = keyof typeof fr
@@ -357,6 +358,7 @@ const en: Dictionary = {
   'admin.running': 'Evaluation running…',
   'admin.offline': 'Full benchmark results (81 questions)',
   'admin.loginRequired': 'Sign in as an administrator to access this page.',
+  'admin.satisfaction': 'satisfied',
 }
 
 export const locales = {

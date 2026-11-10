@@ -56,7 +56,7 @@ export function AdminPage() {
               <div className="kpis">
                 <div className="kpi"><ThumbsUp size={18} aria-hidden /><strong>{feedback.up}</strong></div>
                 <div className="kpi"><ThumbsDown size={18} aria-hidden /><strong>{feedback.down}</strong></div>
-                <div className="kpi"><strong>{total ? `${Math.round((feedback.up / total) * 100)} %` : '—'}</strong><span className="muted small">👍</span></div>
+                <div className="kpi"><strong>{total ? `${Math.round((feedback.up / total) * 100)} %` : '—'}</strong><span className="muted small">{t('admin.satisfaction')}</span></div>
               </div>
               <h3 className="sub-title">{t('admin.worst')}</h3>
               {feedback.negative.length === 0 ? <p className="muted">{t('admin.noFeedback')}</p> : (

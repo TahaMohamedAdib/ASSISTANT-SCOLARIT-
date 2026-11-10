@@ -7,7 +7,7 @@ import { useApp } from '../state'
 /** Reglages avances, replies par defaut : nombre de sources, filtre de type, mode transparence. */
 export function SettingsPopover() {
   const { t } = useT()
-  const { chat, setChat, settings } = useApp()
+  const { chat, setChat, docTypes } = useApp()
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const id = useId()
@@ -41,7 +41,7 @@ export function SettingsPopover() {
             <span className="field__label">{t('settings.docType')}</span>
             <select value={chat.docType ?? ''} onChange={(e) => setChat({ docType: e.target.value || null })}>
               <option value="">{t('settings.allTypes')}</option>
-              {(settings?.doc_types ?? []).map((type) => <option key={type} value={type}>{type}</option>)}
+              {docTypes.map((type) => <option key={type} value={type}>{type}</option>)}
             </select>
           </label>
           <label className="switch">

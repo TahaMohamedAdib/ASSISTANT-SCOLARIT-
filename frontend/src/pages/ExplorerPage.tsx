@@ -10,7 +10,7 @@ import type { SearchHit } from '../types'
 /** Recherche seule : passages bruts, scores et methode (semantique / mots-cles), sans LLM. */
 export function ExplorerPage() {
   const { t } = useT()
-  const { settings } = useApp()
+  const { docTypes } = useApp()
   const [query, setQuery] = useState('')
   const [topK, setTopK] = useState(8)
   const [type, setType] = useState('')
@@ -52,7 +52,7 @@ export function ExplorerPage() {
         <label className="sr-only" htmlFor="explorer-type">{t('settings.docType')}</label>
         <select id="explorer-type" value={type} onChange={(e) => setType(e.target.value)}>
           <option value="">{t('settings.allTypes')}</option>
-          {(settings?.doc_types ?? []).map((x) => <option key={x}>{x}</option>)}
+          {docTypes.map((x) => <option key={x}>{x}</option>)}
         </select>
         <button type="submit" className="btn btn--primary" disabled={busy || !query.trim()}>{t('common.search')}</button>
       </form>

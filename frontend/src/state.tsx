@@ -16,6 +16,8 @@ type AppState = {
   settings: AppSettings | null
   stats: Stats | null
   refreshStats: () => void
+  /** Types reellement presents dans le corpus indexe (pour les filtres de recherche). */
+  docTypes: string[]
   backendUp: boolean | null
   recheckBackend: () => void
   chat: ChatSettings
@@ -44,6 +46,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<'admin' | 'student'>('student')
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
+  const [docTypes, setDocTypes] = useState<string[]>([])
   const [backendUp, setBackendUp] = useState<boolean | null>(null)
   const [chat, setChatState] = useState<ChatSettings>(() => readJson('eih-chat-settings', { topK: 5, docType: null, transparency: false }))
 
@@ -69,6 +72,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refreshStats = useCallback(() => {
     api.stats().then(setStats).catch(() => undefined)
+    api.documents()
+      .then((docs) => setDocTypes([...new Set(docs.filter((d) => d.status === 'indexed').map((d) => d.doc_type))].sort((a, b) => a.localeCompare(b))))
+      .catch(() => undefined)
   }, [])
 
   const recheckBackend = useCallback(() => {
@@ -100,9 +106,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<AppState>(() => ({
-    theme, setTheme, role, login, logout, settings, stats, refreshStats, backendUp, recheckBackend, chat, setChat,
+    theme, setTheme, role, login, logout, settings, stats, refreshStats, docTypes, backendUp, recheckBackend, chat, setChat,
     contact: settings ? { email: settings.contact_email, phone: settings.contact_phone } : appConfig.fallbackContact,
-  }), [theme, setTheme, role, login, logout, settings, stats, refreshStats, backendUp, recheckBackend, chat, setChat])
+  }), [theme, setTheme, role, login, logout, settings, stats, refreshStats, docTypes, backendUp, recheckBackend, chat, setChat])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

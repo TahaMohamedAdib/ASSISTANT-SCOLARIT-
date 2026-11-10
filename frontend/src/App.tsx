@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { ErrorBoundary } from './ErrorBoundary'
 import { I18nProvider } from './i18n'
 import { Shell } from './layout/Shell'
 import { AdminPage } from './pages/AdminPage'
@@ -26,12 +27,14 @@ export function AppRoutes() {
 
 export default function App() {
   return (
-    <I18nProvider>
-      <AppProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </AppProvider>
-    </I18nProvider>
+    <ErrorBoundary>
+      <I18nProvider>
+        <AppProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AppProvider>
+      </I18nProvider>
+    </ErrorBoundary>
   )
 }
