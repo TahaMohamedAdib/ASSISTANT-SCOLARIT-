@@ -66,8 +66,8 @@ export function DocumentsPage() {
         </div>
         {admin && (
           <div className="page-header__actions">
-            <button type="button" className="btn btn--secondary" onClick={() => window.confirm(`${t('docs.reindexAll')} ?`) && act(api.reindexAll)}><RefreshCw size={16} aria-hidden /> <span>{t('docs.reindexAll')}</span></button>
-            <button type="button" className="btn btn--primary" onClick={() => setUpload({ replace: null })}><FilePlus2 size={16} aria-hidden /> <span>{t('docs.upload')}</span></button>
+            <button type="button" className="btn btn--secondary" aria-label={t('docs.reindexAll')} onClick={() => window.confirm(`${t('docs.reindexAll')} ?`) && act(api.reindexAll)}><RefreshCw size={16} aria-hidden /> <span>{t('docs.reindexAll')}</span></button>
+            <button type="button" className="btn btn--primary" aria-label={t('docs.upload')} onClick={() => setUpload({ replace: null })}><FilePlus2 size={16} aria-hidden /> <span>{t('docs.upload')}</span></button>
           </div>
         )}
       </header>

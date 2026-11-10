@@ -46,9 +46,16 @@ export function ChatPage() {
     }
   }, [fresh, reset])
 
+  // Changement de conversation : on ferme le panneau. Mais pas lors du passage "/" -> "/c/<id>"
+  // d'une conversation qui vient d'etre creee (la navigation est appliquee en transition et peut
+  // arriver apres un clic de l'utilisateur sur une citation).
+  const previousId = useRef(conversationId)
   useEffect(() => {
-    setPanel(null)
-    setPendingAttachment(null)
+    if (previousId.current !== null && previousId.current !== conversationId) {
+      setPanel(null)
+      setPendingAttachment(null)
+    }
+    previousId.current = conversationId
   }, [conversationId])
 
   useEffect(() => {
