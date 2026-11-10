@@ -3,7 +3,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from eih_rag.rag.llm import _duration
-from eih_rag.rag.prompting import NO_ANSWER, PROMPTS, is_refusal
+from eih_rag.rag.prompting import NO_ANSWER, PROMPTS, invalid_citations, is_refusal, normalize_citations
 
 
 def test_groq_reset_header_is_parsed():
@@ -36,3 +36,9 @@ def test_extended_testset_covers_all_question_types():
     assert categories == {"factual", "numeric_table", "yes_no", "multi_part", "multi_doc", "version", "summary", "vague", "out_of_corpus"}
     assert all(row["evidence"] for row in rows if row["expected_found"])
     assert all(not row["evidence"] for row in rows if not row["expected_found"])
+
+
+def test_fullwidth_citations_are_normalized():
+    answer = normalize_citations("Durée de 18 semaines 【1】 【3】, voir aussi 【2†source】 et [4].")
+    assert answer == "Durée de 18 semaines [1] [3], voir aussi [2] et [4]."
+    assert invalid_citations(answer, 3) == [4]

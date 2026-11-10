@@ -12,7 +12,7 @@ from ..schemas import AskRequest, AskResponse, IngestRequest, IngestResponse, Se
 from .embeddings import build_embedder
 from .llm import AnswerGenerator, build_generator
 from .retrieval import CrossEncoderReranker, HybridRetriever, LLMQueryRewriter, RetrievalConfig
-from .prompting import NO_ANSWER, SYSTEM_PROMPT, build_user_prompt, invalid_citations, is_refusal
+from .prompting import NO_ANSWER, SYSTEM_PROMPT, build_user_prompt, invalid_citations, is_refusal, normalize_citations
 from .store import ChromaStore, RetrievedChunk, read_manifest, write_manifest
 
 
@@ -127,6 +127,7 @@ class RagService:
             )
 
         answer = self.generator.generate(SYSTEM_PROMPT, build_user_prompt(request.question, hits)).strip()
+        answer = normalize_citations(answer)
         refused = is_refusal(answer)
         return AskResponse(
             answer=NO_ANSWER if refused else answer,

@@ -24,7 +24,7 @@ from .db import Database, new_id, now
 from .loaders import load_document, validate_upload
 from .models import DocumentMetadata
 from .rag.llm import OpenAICompatibleGenerator, strip_thinking
-from .rag.prompting import NO_ANSWER, SYSTEM_PROMPT, build_user_prompt, is_refusal, mentions_not_found
+from .rag.prompting import NO_ANSWER, SYSTEM_PROMPT, build_user_prompt, is_refusal, mentions_not_found, normalize_citations
 from .rag.service import RagService
 from .rag.store import RetrievedChunk
 
@@ -238,6 +238,7 @@ class ChatService:
             if stopped:  # flux interrompu par l'utilisateur (bouton Stop) : on garde la reponse partielle
                 self._save_assistant(conversation_id, answer, citations, debug, timings, started, stopped=True)
 
+        answer = normalize_citations(answer)
         refused = is_refusal(answer)
         found = not refused
         partial = found and mentions_not_found(answer)

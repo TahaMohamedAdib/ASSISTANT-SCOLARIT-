@@ -78,6 +78,18 @@ def mentions_not_found(answer: str) -> bool:
     return NO_ANSWER.lower() in answer.lower()
 
 
+_FANCY_CITATION = re.compile(r"[【〔［]\s*(\d+)(?:\s*†[^】〕］]*)?\s*[】〕］]")
+
+
+def normalize_citations(answer: str) -> str:
+    """Ramene les citations au format [n].
+
+    Certains modeles (gpt-oss) ecrivent 【1】 ou 【1†source】 au lieu de [1] ;
+    sans normalisation, ces citations ne sont ni detectees ni cliquables.
+    """
+    return _FANCY_CITATION.sub(lambda match: f"[{match.group(1)}]", answer)
+
+
 def invalid_citations(answer: str, source_count: int) -> list[int]:
     cited = {int(match) for match in _CITATION_PATTERN.findall(answer)}
     return sorted(number for number in cited if number < 1 or number > source_count)
