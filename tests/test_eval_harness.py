@@ -3,7 +3,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from eih_rag.rag.llm import _duration
-from eih_rag.rag.prompting import NO_ANSWER, PROMPTS, is_refusal
+from eih_rag.rag.prompting import NO_ANSWER, PROMPTS, invalid_citations, is_refusal, normalize_citations
 
 
 def test_groq_reset_header_is_parsed():
@@ -36,3 +36,54 @@ def test_extended_testset_covers_all_question_types():
     assert categories == {"factual", "numeric_table", "yes_no", "multi_part", "multi_doc", "version", "summary", "vague", "out_of_corpus"}
     assert all(row["evidence"] for row in rows if row["expected_found"])
     assert all(not row["evidence"] for row in rows if not row["expected_found"])
+
+
+def test_fullwidth_citations_are_normalized():
+    answer = normalize_citations("Durée de 18 semaines 【1】 【3】, voir aussi 【2†source】 et [4].")
+    assert answer == "Durée de 18 semaines [1] [3], voir aussi [2] et [4]."
+    assert invalid_citations(answer, 3) == [4]
+
+
+def test_attachments_get_their_own_section_and_plain_prompts_are_unchanged():
+    from eih_rag.rag.prompting import ATTACHMENT_HEADER, build_user_prompt
+    from eih_rag.rag.store import RetrievedChunk
+
+    def hit(text, kind):
+        return RetrievedChunk(id=text, chunk_id=text, text=text, file="f.md", reference=None, date=None, page=1, section=None, score=0.9, document_type=kind)
+
+    plain = build_user_prompt("Q ?", [hit("officiel", "Règlement")])
+    assert plain == "EXTRAITS OFFICIELS:\n[1] Document: non renseignee | Reference: non renseignee | Date: non renseignee | Page: 1\nofficiel\n\nQUESTION ETUDIANTE:\nQ ?\n\nREPONSE:"
+    mixed = build_user_prompt("Q ?", [hit("officiel", "Règlement"), hit("mes notes", "attachment")])
+    official_part, attached_part = mixed.split(ATTACHMENT_HEADER)
+    assert "mes notes" not in official_part and "[2] FICHIER JOINT (non officiel)" in attached_part
+
+
+def test_generator_and_judge_caches_do_not_overwrite_each_other(tmp_path, monkeypatch):
+    import eval.experiments as experiments
+
+    monkeypatch.setattr(experiments, "CACHE_PATH", tmp_path / "cache.json")
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
+    generator, judge = experiments.CachedLLM("gen"), experiments.CachedLLM("judge")
+    for llm in (generator, judge):
+        llm.client = SimpleNamespace(generate=lambda system, user, name=llm.model: f"{name}:{user}")
+    generator.generate("s", "q1")
+    judge.generate("s", "q1")
+    generator.save()
+    judge.save()  # ne doit pas effacer la reponse du generateur
+    assert len(json.loads((tmp_path / "cache.json").read_text(encoding="utf-8"))) == 2
+
+
+def test_interactive_client_fails_fast_when_daily_quota_is_exhausted(monkeypatch):
+    import httpx
+    import pytest
+
+    import eih_rag.rag.llm as llm
+
+    request = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")
+    quota = httpx.Response(429, headers={"retry-after": "417"}, json={"error": {"message": "tokens per day (TPD)"}}, request=request)
+    monkeypatch.setattr(llm.httpx, "post", lambda *a, **k: quota)
+    monkeypatch.setattr(llm.time, "sleep", lambda s: pytest.fail("ne doit pas attendre 7 minutes"))
+    client = llm.OpenAICompatibleGenerator("https://api.groq.com/openai/v1", "m", "k", max_wait=20)
+    with pytest.raises(llm.LLMQuotaExceeded) as error:
+        client.generate("s", "u")
+    assert error.value.retry_after == 417 and "7 min" in str(error.value)

@@ -68,6 +68,8 @@ class Chunk:
     # Titre du document et chemin complet des titres (ex. "Titre IV > Article 9 > 9.2").
     title: str | None = None
     section_path: str | None = None
+    # Identifiant du document dans le registre (data/app.db) ; permet l'indexation incrementale.
+    document_id: str | None = None
 
     @property
     def index_text(self) -> str:

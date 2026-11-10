@@ -178,8 +178,14 @@ class CachedLLM:
         return self.cache[key]
 
     def save(self) -> None:
+        # Generateur et juge partagent ce fichier : on fusionne avec le contenu actuel au lieu de
+        # l'ecraser, sinon chaque instance efface les entrees ajoutees par l'autre.
         CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        CACHE_PATH.write_text(json.dumps(self.cache, ensure_ascii=False), encoding="utf-8")
+        on_disk = json.loads(CACHE_PATH.read_text(encoding="utf-8")) if CACHE_PATH.exists() else {}
+        self.cache = {**on_disk, **self.cache}
+        tmp = CACHE_PATH.with_suffix(".tmp")
+        tmp.write_text(json.dumps(self.cache, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(CACHE_PATH)
 
 
 JUDGE_PROMPT = """Tu es un evaluateur strict d'un assistant RAG de scolarite. On te donne la question, la reponse de reference,

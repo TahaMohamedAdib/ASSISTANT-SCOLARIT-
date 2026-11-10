@@ -20,7 +20,7 @@ os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 from .config import Settings  # noqa: E402
 from .rag.llm import LLMUnavailable  # noqa: E402
 from .rag.service import RagService  # noqa: E402
-from .schemas import AskRequest, IngestRequest, SearchRequest  # noqa: E402
+from .schemas import AskRequest, SearchRequest  # noqa: E402
 
 
 def _print_sources(sources) -> None:
@@ -47,10 +47,8 @@ def _ask(service: RagService, question: str, top_k: int) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="eih_rag", description="Assistant Scolarite EIH (RAG)")
     sub = parser.add_subparsers(dest="command", required=True)
-    ingest = sub.add_parser("ingest", help="indexe les 7 PDF du corpus")
-    ingest.add_argument("--strategy", default="structural", choices=("structural", "fixed"))
-    ingest.add_argument("--chunk-size", type=int, default=None)
-    ingest.add_argument("--overlap", type=int, default=None)
+    ingest = sub.add_parser("ingest", help="enregistre le corpus et indexe ce qui manque")
+    ingest.add_argument("--all", action="store_true", help="reindexe tous les documents actifs")
     ask = sub.add_parser("ask", help="pose une question")
     ask.add_argument("question")
     ask.add_argument("-k", "--top-k", type=int, default=None)
@@ -66,14 +64,19 @@ def main(argv: list[str] | None = None) -> int:
     top_k = getattr(args, "top_k", None) or settings.default_top_k
 
     if args.command == "ingest":
-        result = service.ingest(
-            IngestRequest(
-                strategy=args.strategy,
-                chunk_size=args.chunk_size or settings.chunk_size,
-                overlap=args.overlap if args.overlap is not None else settings.chunk_overlap,
-            )
-        )
-        print(f"{result.documents_indexed} documents, {result.chunks_indexed} fragments indexes ({result.strategy.strategy}:{result.strategy.chunk_size}:{result.strategy.overlap}).")
+        # Meme chemin que l'application web : registre SQLite + indexation par document.
+        from .db import Database
+        from .documents import DocumentService
+
+        documents = DocumentService(settings, Database(settings.db_path), service.store, background=False)
+        documents.sync_base_corpus()
+        if args.all:
+            documents.reindex_all()
+        stats = documents.stats()
+        print(f"{stats['indexed_documents']} documents indexes, {stats['chunks']} fragments.")
+        for row in documents.list():
+            if row["status"] == "failed":
+                print(f"  ECHEC {row['title']}: {row['error']}")
     elif args.command == "ask":
         _ask(service, args.question, top_k)
     elif args.command == "search":

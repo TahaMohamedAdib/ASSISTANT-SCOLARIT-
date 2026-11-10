@@ -50,6 +50,23 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(default="", validation_alias=AliasChoices("RAG_OPENAI_API_KEY", "OPENAI_API_KEY"))
     cors_origins: str = "http://localhost:5173"
 
+    # ---- Application v2 : base, televersements, administration, chat
+    db_path: Path = PROJECT_ROOT / "data" / "app.db"
+    # Hors de tout dossier servi publiquement ; les fichiers ne sont lus que via l'API.
+    uploads_dir: Path = PROJECT_ROOT / "data" / "uploads"
+    admin_password: str = Field(default="", validation_alias=AliasChoices("RAG_ADMIN_PASSWORD", "ADMIN_PASSWORD"))
+    auth_secret: str = Field(default="", validation_alias=AliasChoices("RAG_AUTH_SECRET", "AUTH_SECRET"))
+    max_upload_mb: int = Field(default=20, ge=1, le=200)
+    # Si vrai, un document televerse reste "en attente de validation" jusqu'a approbation.
+    require_review: bool = False
+    contact_email: str = "scolarite@eih.ma"
+    contact_phone: str = "+212 5 22 00 00 00"
+    # Modele secondaire (quota distinct chez Groq) : reformulation des relances et suggestions.
+    aux_model: str = "qwen/qwen3.8-27b"
+    # Attente maximale (s) quand le quota du LLM est atteint, avant d'afficher une erreur a l'etudiant.
+    llm_max_wait_s: float = Field(default=20.0, ge=0, le=600)
+    history_turns: int = Field(default=3, ge=0, le=10)
+
     @property
     def allowed_origins(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]

@@ -12,7 +12,7 @@ from ..schemas import AskRequest, AskResponse, IngestRequest, IngestResponse, Se
 from .embeddings import build_embedder
 from .llm import AnswerGenerator, build_generator
 from .retrieval import CrossEncoderReranker, HybridRetriever, LLMQueryRewriter, RetrievalConfig
-from .prompting import NO_ANSWER, SYSTEM_PROMPT, build_user_prompt, invalid_citations, is_refusal
+from .prompting import NO_ANSWER, SYSTEM_PROMPT, build_user_prompt, invalid_citations, is_refusal, normalize_citations
 from .store import ChromaStore, RetrievedChunk, read_manifest, write_manifest
 
 
@@ -38,6 +38,7 @@ class RagService:
             openai_base_url=settings.openai_base_url,
             openai_model=settings.openai_model,
             openai_api_key=settings.openai_api_key,
+            max_wait=settings.llm_max_wait_s,
         )
         # Sans methode ``all_chunks`` (store de test), on reste en recherche dense simple.
         if retriever is None and hasattr(self.store, "all_chunks"):
@@ -65,9 +66,13 @@ class RagService:
             reference=chunk.reference,
             date=chunk.date,
             page=chunk.page,
-            section=chunk.section,
             excerpt=chunk.text,
             score=chunk.relevance if chunk.relevance is not None else chunk.score,
+            title=chunk.title,
+            document_id=chunk.document_id,
+            document_type=chunk.document_type,
+            section=chunk.section_path or chunk.section,
+            methods=list(chunk.methods),
         )
 
     def ingest(self, request: IngestRequest) -> IngestResponse:
@@ -123,6 +128,7 @@ class RagService:
             )
 
         answer = self.generator.generate(SYSTEM_PROMPT, build_user_prompt(request.question, hits)).strip()
+        answer = normalize_citations(answer)
         refused = is_refusal(answer)
         return AskResponse(
             answer=NO_ANSWER if refused else answer,

@@ -43,7 +43,10 @@ def hit(score: float = 0.8) -> RetrievedChunk:
 
 
 def make_service(tmp_path, hits, answer, threshold=0.28):
-    settings = Settings(chroma_dir=tmp_path / "chroma", manifest_path=tmp_path / "manifest.json", score_threshold=threshold)
+    settings = Settings(
+        chroma_dir=tmp_path / "chroma", manifest_path=tmp_path / "manifest.json", score_threshold=threshold,
+        db_path=tmp_path / "app.db", uploads_dir=tmp_path / "uploads", llm_provider="ollama",
+    )
     return RagService(settings, store=FakeStore(hits), generator=FakeGenerator(answer))
 
 
