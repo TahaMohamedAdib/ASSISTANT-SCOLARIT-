@@ -56,3 +56,18 @@ def test_attachments_get_their_own_section_and_plain_prompts_are_unchanged():
     mixed = build_user_prompt("Q ?", [hit("officiel", "Règlement"), hit("mes notes", "attachment")])
     official_part, attached_part = mixed.split(ATTACHMENT_HEADER)
     assert "mes notes" not in official_part and "[2] FICHIER JOINT (non officiel)" in attached_part
+
+
+def test_generator_and_judge_caches_do_not_overwrite_each_other(tmp_path, monkeypatch):
+    import eval.experiments as experiments
+
+    monkeypatch.setattr(experiments, "CACHE_PATH", tmp_path / "cache.json")
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
+    generator, judge = experiments.CachedLLM("gen"), experiments.CachedLLM("judge")
+    for llm in (generator, judge):
+        llm.client = SimpleNamespace(generate=lambda system, user, name=llm.model: f"{name}:{user}")
+    generator.generate("s", "q1")
+    judge.generate("s", "q1")
+    generator.save()
+    judge.save()  # ne doit pas effacer la reponse du generateur
+    assert len(json.loads((tmp_path / "cache.json").read_text(encoding="utf-8"))) == 2
