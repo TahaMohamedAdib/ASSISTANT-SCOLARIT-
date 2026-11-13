@@ -1,7 +1,7 @@
 """Genere le JSON de fragments de la seance 1.
 
 Exemple:
-    python scripts/ingest_corpus.py --strategy structural --output data/chunks.json
+    python backend/scripts/ingest_corpus.py --strategy structural --output data/chunks.json
 """
 
 from __future__ import annotations
@@ -12,8 +12,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT_ROOT / "src"))
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT / "backend" / "src"))
 
 from eih_rag.chunking import create_chunks, validate_chunk_parameters
 from eih_rag.extraction import extract_pdf

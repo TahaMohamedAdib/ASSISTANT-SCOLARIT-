@@ -24,7 +24,7 @@ import unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "backend" / "src"))
 
 NO_ANSWER = "Je ne trouve pas cette information dans les documents de l'École."
 
