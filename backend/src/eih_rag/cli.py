@@ -6,7 +6,7 @@
     python -m eih_rag.cli search "requete" -k 8  # recherche seule (debogage)
 
 A lancer depuis la racine du projet avec ``--app-dir`` inutile : utiliser
-``set PYTHONPATH=src`` (Windows) ou ``python -m`` depuis ``src``.
+``set PYTHONPATH=backend/src`` (Windows) ou ``python -m`` depuis ``backend/src``.
 """
 
 from __future__ import annotations

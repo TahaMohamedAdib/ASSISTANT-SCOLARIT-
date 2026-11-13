@@ -6,7 +6,17 @@ Application RAG (Retrieval-Augmented Generation) qui répond aux questions des �
 - Frontend : application React TypeScript.
 - Les PDF de `corpus/` sont lus mais jamais modifiés.
 
-Les résultats d'évaluation et le choix de la configuration sont détaillés dans [eval/RESULTS.md](eval/RESULTS.md).
+Les résultats expérimentaux de recherche sont disponibles dans [eval/results/retrieval_experiments.csv](eval/results/retrieval_experiments.csv).
+
+## Organisation du dépôt
+
+- `backend/` : API FastAPI, moteur RAG, scripts, tests et dépendances Python.
+- `frontend/` : interface React/TypeScript et client HTTP.
+- `corpus/` : sept PDF officiels, conservés à la racine.
+- `eval/` : jeux de questions, expériences et résultats.
+- `data/` : index Chroma et manifeste générés localement (non versionnés).
+
+Les commandes ci-dessous se lancent **depuis la racine du dépôt**. Le fichier `.env` et `pytest.ini` restent à la racine.
 
 ## Architecture
 
@@ -21,8 +31,8 @@ PDF ──► extraction (pdfplumber)          tableaux rendus ligne à ligne av
    index Chroma (multilingual-e5-base)   texte indexé = titre du document > chemin des titres + contenu
         │
 question ──► recherche hybride           dense (Chroma) + BM25 (rank-bm25), fusion RRF (poids dense 0,7)
-        │    [option] reranker           cross-encoder multilingue (désactivé : voir RESULTS.md)
-        │    [option] expansion          sous-requêtes générées par le LLM (désactivée : voir RESULTS.md)
+        │    [option] reranker           cross-encoder multilingue (désactivé : voir eval/results/)
+        │    [option] expansion          sous-requêtes générées par le LLM (désactivée : voir eval/results/)
         ▼
    top-6 fragments ──► LLM (Groq, openai/gpt-oss-120b)
                        prompt contraint : réponse fondée sur les extraits uniquement, citations [n],
@@ -31,13 +41,13 @@ question ──► recherche hybride           dense (Chroma) + BM25 (rank-bm25)
 
 | Module | Rôle |
 | --- | --- |
-| `src/eih_rag/extraction.py` | Extraction par page, métadonnées (référence, type, date, version), tableaux contextualisés |
-| `src/eih_rag/chunking.py` | Découpages `structural` (par défaut) et `fixed` |
-| `src/eih_rag/rag/store.py` | Adaptateur Chroma (reconstruction idempotente, lecture du corpus pour BM25) |
-| `src/eih_rag/rag/retrieval.py` | Recherche hybride, fusion RRF, reranker, expansion de requête |
-| `src/eih_rag/rag/prompting.py` | Prompts `v1` (initial) et `v2` (retenu), contrôle des citations |
-| `src/eih_rag/rag/llm.py` | Clients Ollama et OpenAI-compatible (Groq), avec gestion des quotas (429) |
-| `src/eih_rag/cli.py` | Interface en ligne de commande |
+| `backend/src/eih_rag/extraction.py` | Extraction par page, métadonnées (référence, type, date, version), tableaux contextualisés |
+| `backend/src/eih_rag/chunking.py` | Découpages `structural` (par défaut) et `fixed` |
+| `backend/src/eih_rag/rag/store.py` | Adaptateur Chroma (reconstruction idempotente, lecture du corpus pour BM25) |
+| `backend/src/eih_rag/rag/retrieval.py` | Recherche hybride, fusion RRF, reranker, expansion de requête |
+| `backend/src/eih_rag/rag/prompting.py` | Prompts `v1` (initial) et `v2` (retenu), contrôle des citations |
+| `backend/src/eih_rag/rag/llm.py` | Clients Ollama et OpenAI-compatible (Groq), avec gestion des quotas (429) |
+| `backend/src/eih_rag/cli.py` | Interface en ligne de commande |
 | `eval/` | Jeux de test, banc d'expériences et résultats |
 
 ## Installation
@@ -48,7 +58,7 @@ Python **3.12** est recommandé. Avec Python 3.14, torch n'est pas disponible et
 uv venv .venv --python 3.12              # ou : py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 Copy-Item .env.example .env              # puis renseigner la clé Groq
 ```
 
@@ -72,7 +82,7 @@ Au premier lancement, le modèle d'embeddings `intfloat/multilingual-e5-base` (e
 ### Ligne de commande
 
 ```powershell
-$env:PYTHONPATH = "src"
+$env:PYTHONPATH = "backend/src"
 python -m eih_rag.cli ingest                         # indexe les 7 PDF (structural 1200/200)
 python -m eih_rag.cli ask "Combien de jours avant la soutenance faut-il déposer le rapport de PFE ?"
 python -m eih_rag.cli chat                           # session interactive
@@ -84,7 +94,7 @@ Chaque réponse est suivie de ses sources numérotées (fichier, page, section, 
 ### API et interface web
 
 ```powershell
-python -m uvicorn eih_rag.main:app --app-dir src --host 127.0.0.1 --port 8000
+python -m uvicorn eih_rag.main:app --app-dir backend/src --host 127.0.0.1 --port 8000
 # dans un second terminal
 Set-Location frontend; npm install; npm run dev     # http://localhost:5173
 ```
@@ -136,6 +146,6 @@ Les résultats sont ajoutés à `eval/results/*.csv` ; le détail par question e
 ## Tests
 
 ```powershell
-python -m pytest -q                  # 30 tests : extraction, découpage, recherche hybride, API, évaluation
+python -m pytest -q                  # tests backend et vérification des chemins, depuis la racine
 npm --prefix frontend run build
 ```
