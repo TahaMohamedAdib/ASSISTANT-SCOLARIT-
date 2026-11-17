@@ -5,6 +5,7 @@ __pycache__/
 .env
 data/chroma/
 data/index_manifest.json
+data/index_manifest.json.lock
 frontend/node_modules/
 frontend/dist/
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Any, Literal
 
 
 @dataclass(frozen=True)
@@ -68,6 +68,7 @@ class Chunk:
     # Titre du document et chemin complet des titres (ex. "Titre IV > Article 9 > 9.2").
     title: str | None = None
     section_path: str | None = None
+    origin: Literal["official", "upload"] = "official"
 
     @property
     def index_text(self) -> str:

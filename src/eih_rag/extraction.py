@@ -126,8 +126,7 @@ def _candidate_margin_lines(lines: list[str], margin_size: int = 3) -> set[str]:
     candidates: list[str] = []
     for page_lines in lines:
         compact = [normalize(line) for line in page_lines if normalize(line)]
-        candidates.extend(_margin_signature(line) for line in compact[:margin_size])
-        candidates.extend(_margin_signature(line) for line in compact[-margin_size:])
+        candidates.extend({_margin_signature(line) for line in compact[:margin_size] + compact[-margin_size:]})
     counts = Counter(candidates)
     return {line for line, occurrences in counts.items() if occurrences >= 2 and len(line) >= 3}
 

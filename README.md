@@ -1,10 +1,10 @@
 # Assistant Scolarité EIH
 
-Application RAG (Retrieval-Augmented Generation) qui répond aux questions des étudiants **uniquement** à partir des sept documents officiels de l'École d'Ingénieurs Hélianthe : règlement des études, guide des stages et du PFE, charte de mobilité, calendrier académique, guide de la vie étudiante, FAQ scolarité et note de service 2026-14.
+Application RAG (Retrieval-Augmented Generation) qui répond aux questions des étudiants à partir des PDF indexés. Le corpus initial de l'École d'Ingénieurs Hélianthe contient sept documents officiels : règlement des études, guide des stages et du PFE, charte de mobilité, calendrier académique, guide de la vie étudiante, FAQ scolarité et note de service 2026-14.
 
 - Backend : API FastAPI et interface en ligne de commande, index vectoriel persistant Chroma.
 - Frontend : application React TypeScript.
-- Les PDF de `corpus/` sont lus mais jamais modifiés.
+- Les PDF officiels de `corpus/` sont en lecture seule pour l'API. Les PDF téléversés sont conservés dans `data/uploads/`.
 
 Les résultats d'évaluation et le choix de la configuration sont détaillés dans [eval/RESULTS.md](eval/RESULTS.md).
 
@@ -73,7 +73,7 @@ Au premier lancement, le modèle d'embeddings `intfloat/multilingual-e5-base` (e
 
 ```powershell
 $env:PYTHONPATH = "src"
-python -m eih_rag.cli ingest                         # indexe les 7 PDF (structural 1200/200)
+python -m eih_rag.cli ingest                         # indexe les PDF officiels et téléversés (structural 1200/200)
 python -m eih_rag.cli ask "Combien de jours avant la soutenance faut-il déposer le rapport de PFE ?"
 python -m eih_rag.cli chat                           # session interactive
 python -m eih_rag.cli search "convention de stage" -k 8   # recherche seule, sans LLM
@@ -92,17 +92,42 @@ Set-Location frontend; npm install; npm run dev     # http://localhost:5173
 | Route | Rôle |
 | --- | --- |
 | `GET /api/health` | État du service et nombre de fragments ; `503` si Chroma est indisponible |
-| `POST /api/ingest` | Reconstruit l'index sans doublon (par défaut `structural`, 1200, 200) |
-| `GET /api/documents` | Documents indexés et métadonnées |
+| `POST /api/ingest` | Reconstruit l'index à partir des deux dossiers (par défaut `structural`, 1200, 200) |
+| `GET /api/documents` | Tableau des documents indexés avec les champs existants et `origin` (`official` ou `upload`) |
+| `POST /api/documents/upload` | Reçoit le champ multipart `file`, reconstruit l'index et renvoie le document indexé (`201`) |
+| `DELETE /api/documents/{filename}` | Supprime un PDF téléversé et reconstruit l'index (`204`, corps vide) |
 | `POST /api/search` | Recherche seule avec scores et filtre `filters.type` |
 | `POST /api/ask` | Recherche, génération citée et contrôle des citations ; `502` si le LLM est indisponible |
 
 La documentation interactive est disponible sur <http://localhost:8000/docs>.
 
+### Gestion des PDF
+
+Envoyez le fichier avec `curl -F "file=@guide.pdf" http://localhost:8000/api/documents/upload`.
+Pour la suppression, encodez le nom du fichier comme un segment d'URL, par exemple
+`curl -X DELETE http://localhost:8000/api/documents/guide.pdf`.
+
+L'API accepte les PDF contenant du texte extractible et impose une limite de 20 Mio par fichier.
+Un nom invalide renvoie `400`, un PDF officiel à supprimer `403`, un fichier introuvable `404`,
+un nom déjà utilisé `409` (casse ignorée), un fichier trop volumineux `413` et un fichier non pris
+en charge, illisible ou sans texte indexable `415`. Les PDF scannés sans couche texte
+nécessitent une OCR préalable. Les erreurs contiennent le champ FastAPI `detail`.
+
+Les modifications réutilisent le dernier découpage enregistré, ou les valeurs par défaut à la
+première indexation. Le manifeste et la collection Chroma active basculent ensemble après
+construction de la nouvelle collection. En cas d'échec d'indexation, l'opération renvoie `503`
+et l'index actif reste disponible. Les documents téléversés complètent les sources officielles
+dans les réponses de l'assistant.
+
+Lancez l'API avec un seul processus Uvicorn pour la base Chroma locale. Les routes de gestion
+agissent sur un corpus partagé et sont accessibles aux clients de cette API locale.
+
 ### Configuration (`.env`, préfixe `RAG_`)
 
 | Variable | Défaut | Effet |
 | --- | --- | --- |
+| `RAG_UPLOADS_DIR` | `data/uploads/` | Dossier des PDF téléversés, distinct de `corpus/` |
+| `RAG_MAX_UPLOAD_BYTES` | `20971520` | Taille maximale d'un PDF téléversé, en octets |
 | `RAG_EMBEDDING_MODEL` | `intfloat/multilingual-e5-base` | Modèle d'embeddings |
 | `RAG_CHUNK_SIZE` / `RAG_CHUNK_OVERLAP` | `1200` / `200` | Découpage utilisé par la CLI |
 | `RAG_RETRIEVAL_MODE` | `hybrid` | `dense`, `bm25` ou `hybrid` |

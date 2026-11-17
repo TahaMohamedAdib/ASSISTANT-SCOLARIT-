@@ -3,14 +3,22 @@
 from __future__ import annotations
 
 import json
+import logging
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from tempfile import NamedTemporaryFile
+from typing import Any, Literal
+from uuid import uuid4
 
 from chromadb.errors import NotFoundError
 
 from ..models import Chunk
 from .embeddings import Embedder
+
+
+logger = logging.getLogger(__name__)
 
 
 class StoreUnavailable(RuntimeError):
@@ -33,19 +41,20 @@ class RetrievedChunk:
     document_type: str | None = None
     # Score absolu dans [0, 1] utilise pour le seuil de refus (cosinus ou reranker).
     relevance: float | None = None
+    origin: Literal["official", "upload"] = "official"
 
 
 class ChromaStore:
     """Base vectorielle Chroma stockee dans ``data/chroma``."""
 
-    def __init__(self, directory: Path, collection_name: str, embedder: Embedder) -> None:
+    def __init__(
+        self, directory: Path, collection_name: str, embedder: Embedder, manifest_path: Path | None = None
+    ) -> None:
         self.directory = Path(directory)
         self.collection_name = collection_name
         self.embedder = embedder
+        self.manifest_path = manifest_path or self.directory / f"{collection_name}.json"
         self._client = None
-        self._collection = None
-        # Incremente a chaque reconstruction : invalide le cache BM25 du retriever.
-        self.version = 0
 
     @property
     def client(self):
@@ -59,17 +68,25 @@ class ChromaStore:
         return self._client
 
     @property
+    def version(self) -> str:
+        # Le nom de la collection change a chaque publication et invalide le cache BM25.
+        return read_index_manifest(self.manifest_path).get("collection") or self.collection_name
+
+    @property
     def collection(self):
-        if self._collection is None:
-            try:
-                self._collection = self.client.get_or_create_collection(
-                    name=self.collection_name,
-                    embedding_function=None,
-                    metadata={"hnsw:space": "cosine"},
-                )
-            except Exception as error:  # pragma: no cover - defensive boundary
-                raise StoreUnavailable(f"Collection Chroma indisponible : {error}") from error
-        return self._collection
+        try:
+            name = self.version
+            if name != self.collection_name:
+                return self.client.get_collection(name=name, embedding_function=None)
+            return self.client.get_or_create_collection(
+                name=name,
+                embedding_function=None,
+                metadata={"hnsw:space": "cosine"},
+            )
+        except StoreUnavailable:
+            raise
+        except Exception as error:  # pragma: no cover - Chroma boundary
+            raise StoreUnavailable(f"Collection Chroma indisponible : {error}") from error
 
     def count(self) -> int:
         try:
@@ -93,34 +110,51 @@ class ChromaStore:
             "section_path": chunk.section_path or "",
             "title": chunk.title or "",
             "strategy": chunk.strategy,
+            "origin": chunk.origin,
         }
 
-    def rebuild(self, chunks: list[Chunk]) -> None:
-        """Remplace l'index entier : relancer l'ingestion ne cree aucun doublon."""
+    def _discard_collection(self, name: str) -> None:
         try:
-            try:
-                self.client.delete_collection(self.collection_name)
-            except (ValueError, NotFoundError):
-                pass
-            self._collection = self.client.get_or_create_collection(
-                name=self.collection_name,
-                embedding_function=None,
-                metadata={"hnsw:space": "cosine"},
+            self.client.delete_collection(name)
+        except NotFoundError:
+            pass
+        except Exception:
+            logger.warning("Impossible de nettoyer la collection Chroma %s", name, exc_info=True)
+
+    @contextmanager
+    def stage_rebuild(self, chunks: list[Chunk]) -> Iterator[str]:
+        """Prepare une collection inactive, puis laisse l'appelant publier son manifeste."""
+        previous = self.version
+        name = f"{self.collection_name[:30]}_{uuid4().hex}"
+        client = self.client
+        try:
+            collection = client.create_collection(
+                name=name, embedding_function=None, metadata={"hnsw:space": "cosine"}
             )
             for offset in range(0, len(chunks), 64):
                 batch = chunks[offset : offset + 64]
-                self.collection.upsert(
+                collection.upsert(
                     ids=[chunk.id for chunk in batch],
                     documents=[chunk.text for chunk in batch],
                     metadatas=[self._metadata(chunk) for chunk in batch],
-                    # On indexe le texte enrichi (titre + hierarchie) mais on stocke le texte brut.
                     embeddings=self.embedder.embed_documents([chunk.index_text for chunk in batch]),
                 )
-        except StoreUnavailable:
-            raise
-        except Exception as error:  # pragma: no cover - Chroma / model boundary
+        except Exception as error:
+            self._discard_collection(name)
             raise StoreUnavailable(f"Echec de l'indexation Chroma : {error}") from error
-        self.version += 1
+
+        try:
+            yield name
+        except BaseException:
+            self._discard_collection(name)
+            raise
+        else:
+            self._discard_collection(previous)
+
+    def rebuild(self, chunks: list[Chunk]) -> None:
+        """Remplace l'index entier, y compris pour les appels hors service."""
+        with self.stage_rebuild(chunks) as name:
+            write_manifest(self.manifest_path, [], {}, name)
 
     @staticmethod
     def _to_chunk(item_id: str, text: str, metadata: dict | None, score: float) -> RetrievedChunk:
@@ -139,6 +173,7 @@ class ChromaStore:
             section_path=str(metadata.get("section_path") or "") or None,
             document_type=str(metadata.get("document_type") or "") or None,
             relevance=score,
+            origin="upload" if metadata.get("origin") == "upload" else "official",
         )
 
     def all_chunks(self) -> tuple[list[RetrievedChunk], list[list[float]]]:
@@ -179,18 +214,34 @@ class ChromaStore:
         return hits
 
 
-def write_manifest(path: Path, documents: list[dict[str, Any]], strategy: dict[str, Any]) -> None:
-    """Ecrit le catalogue des documents de maniere atomique."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(".tmp")
-    temporary.write_text(json.dumps({"documents": documents, "strategy": strategy}, ensure_ascii=False, indent=2), encoding="utf-8")
-    temporary.replace(path)
-
-
-def read_manifest(path: Path) -> list[dict[str, Any]]:
-    if not path.exists():
-        return []
+def write_manifest(
+    path: Path, documents: list[dict[str, Any]], strategy: dict[str, Any], collection: str
+) -> None:
+    """Publie ensemble le catalogue et le nom de la collection active."""
+    temporary = None
     try:
-        return json.loads(path.read_text(encoding="utf-8")).get("documents", [])
-    except (OSError, json.JSONDecodeError) as error:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent, delete=False) as stream:
+            temporary = Path(stream.name)
+            json.dump(
+                {"documents": documents, "strategy": strategy, "collection": collection},
+                stream, ensure_ascii=False, indent=2,
+            )
+        temporary.replace(path)
+    except OSError as error:
+        raise StoreUnavailable(f"Impossible de publier le manifeste : {error}") from error
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink(missing_ok=True)
+
+
+def read_index_manifest(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("Un objet JSON est attendu.")
+        return payload
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as error:
         raise StoreUnavailable(f"Manifeste d'index illisible : {error}") from error
