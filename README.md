@@ -103,6 +103,10 @@ La documentation interactive est disponible sur <http://localhost:8000/docs>.
 
 ### Gestion des PDF
 
+Dans l'onglet **Documents**, sélectionnez un PDF, puis cliquez sur **Téléverser le PDF**. La bibliothèque affiche l'origine et les métadonnées de chaque document. Le bouton de suppression apparaît sur les PDF téléversés et demande une confirmation.
+
+Le nom de l'application et les couleurs des champs, boutons et alertes se règlent dans `frontend/vite.config.ts`.
+
 Envoyez le fichier avec `curl -F "file=@guide.pdf" http://localhost:8000/api/documents/upload`.
 Pour la suppression, encodez le nom du fichier comme un segment d'URL, par exemple
 `curl -X DELETE http://localhost:8000/api/documents/guide.pdf`.

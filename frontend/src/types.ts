@@ -31,4 +31,5 @@ export type IndexedDocument = {
   status: string | null
   page_count: number
   chunk_count: number
+  origin?: 'official' | 'upload'
 }
