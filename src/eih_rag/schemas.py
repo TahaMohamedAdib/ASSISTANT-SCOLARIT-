@@ -84,6 +84,7 @@ class IndexedDocument(BaseModel):
     status: str | None = None
     page_count: int
     chunk_count: int
+    origin: Literal["official", "upload"] = "official"
 
 
 class HealthResponse(BaseModel):

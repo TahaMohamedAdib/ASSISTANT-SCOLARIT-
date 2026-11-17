@@ -24,6 +24,8 @@ class Settings(BaseSettings):
 
     app_name: str = "Assistant Scolarite EIH"
     corpus_dir: Path = PROJECT_ROOT / "corpus"
+    uploads_dir: Path = PROJECT_ROOT / "data" / "uploads"
+    max_upload_bytes: int = Field(default=20 * 1024 * 1024, gt=0)
     chroma_dir: Path = PROJECT_ROOT / "data" / "chroma"
     manifest_path: Path = PROJECT_ROOT / "data" / "index_manifest.json"
     collection_name: str = "eih_chunks"

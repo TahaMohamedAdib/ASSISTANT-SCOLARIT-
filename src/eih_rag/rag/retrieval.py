@@ -116,7 +116,7 @@ class HybridRetriever:
         self.config = config
         self.reranker = reranker
         self.rewriter = rewriter
-        self._corpus_version: int | None = None
+        self._corpus_version: str | int | None = None
         self._chunks: list[RetrievedChunk] = []
         self._embeddings: np.ndarray | None = None
         self._bm25 = None
